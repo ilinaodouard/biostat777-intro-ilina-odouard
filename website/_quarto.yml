@@ -1,0 +1,25 @@
+project:
+  type: website
+
+website:
+  title: "Ilina Odouard"
+  navbar:
+    background: primary
+    search: true
+    left:
+      - href: index.qmd
+        text: Home
+      - href: about.qmd
+        text: About
+      - href: analysis.qmd
+        text: Example Analysis
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+    width: 800px
+
+
+

@@ -1,0 +1,203 @@
+---
+title: "Example Data Analysis: Medicare Part D Drug Price Negotiation"
+format: html
+---
+
+An example data analysis can be found below. 
+
+# Background
+
+Under the Inflation Reduction Act of 2022, Medicare is allowed to negotiate the prices of certain drugs with high spending. In the first year of the negotiation program, Medicare was permitted to negotiate the prices of 10 Part D drugs. 
+
+# Objective
+
+This analysis will estimated what the annual spending on these ten drugs would have been between 2018-2022 if the new negotiated prices had been implemented during those years. The analysis uses Medicare Part D Dashboard data (https://data.cms.gov/summary-statistics-on-use-and-payments/medicare-medicaid-spending-by-drug/medicare-part-d-spending-by-drug) and the negotiated prices for  the first ten Part D drugs selected for negotiation (https://www.cms.gov/inflation-reduction-act-and-medicare/medicare-drug-price-negotiation). 
+
+## Load the data
+```{r}
+#load packages
+library(tidyverse)
+library(languageserver)
+library(ggpubr)
+
+#read in data files
+drugprices <- read_csv("negotiatedprices.csv")
+spending <- read_csv("medicarepartd.csv")
+```
+
+## Wrangling: Drug Prices
+```{r}
+#select and rename variables
+drugprices <- drugprices %>%
+    select(`Selected Drug Name`, `Active Ingredient Name or Active Moiety Name`, `Single MFP per 30 DES`) %>%
+    rename(brand = `Selected Drug Name`,
+            molecule = `Active Ingredient Name or Active Moiety Name`,
+            price30d = `Single MFP per 30 DES`) %>%
+    distinct()
+
+#change price variable to numeric
+drugprices <- drugprices %>%
+    mutate(price30d = as.numeric(str_remove_all(price30d, "[$,]"))) 
+
+#change drug name variable to lowercase
+drugprices <- drugprices %>%
+    mutate(brand = tolower(brand),
+            molecule = tolower(molecule))
+
+head(drugprices)
+```
+
+## Wrangling: Spending
+```{r}
+#rename variables, arrange in tidy format
+spending <- spending %>%
+    select(Brnd_Name, Gnrc_Name, Mftr_Name, starts_with("Tot_Spndng_"), starts_with("Tot_Benes_")) %>%
+    rename(brand = Brnd_Name, 
+            molecule = Gnrc_Name) %>%
+    pivot_longer(cols = starts_with(c("Tot_Spndng_", "Tot_Benes_")), 
+                    names_to = "item",  
+                    values_to = "amount")  %>%
+    mutate(year = str_extract(item, ".{4}$")) %>%
+    mutate(item = ifelse(str_detect(item, "Spndng"), "spending", "benes")) %>%              
+    pivot_wider(names_from = "item",
+                    values_from = "amount") 
+
+#change brand and molecule names to lowercase
+spending <- spending %>%
+    mutate(brand = tolower(brand),
+            molecule = tolower(molecule))
+
+#adjust some molecule names to ensure match with drug price data
+spending <- spending %>%
+    mutate(molecule = ifelse(str_detect(molecule, "dapagliflozin"), "dapagliflozin", molecule)) %>%
+    mutate(molecule = ifelse(brand=="entresto", "valsartan / sacubitrilat", molecule)) %>%
+    mutate(molecule = ifelse(str_detect(brand, regex("^(novolog|fiasp)", ignore_case = TRUE)), "insulin aspart, human", molecule)) %>%
+    mutate(molecule = ifelse(brand=="januvia", "sitagliptin", molecule))
+
+head(spending)   
+
+```
+
+
+## Finalize Analytic Dataset
+``` {r}
+#join with drug price data 
+data <- left_join(drugprices, spending, by = "molecule")
+
+head(data)
+
+#make 1 row per drug-year
+data <- data %>%
+    filter(Mftr_Name=="Overall") %>%
+    select(molecule, year, price30d, spending, benes) %>%
+    group_by(molecule, year, price30d) %>%
+    reframe(spending = sum(spending, na.rm = TRUE), benes = sum(benes, na.rm = TRUE))
+
+#new variables: estimated annual cost using new prices, estimated total spending, percent change in spending
+data <- data %>%
+        mutate(annual_cost = 12*price30d) %>%
+        mutate(est_spending = annual_cost*benes) %>%
+        mutate(perc_diff = ((est_spending - spending)/spending)*100)
+
+#express spending in millions
+data <- data %>%
+    mutate(spending = round(spending/1000000, digits=1),
+            est_spending = round(est_spending/1000000, digits=1))
+
+#view the dataset
+data
+
+#sense check
+data %>%
+group_by(year) %>%
+summarize(tot_spend = sum(spending))
+```
+
+## Plots
+
+### Actual and Hypothetical Spending on First Ten Part D Drugs Included in Negotiation Program, 2018-2022
+``` {r, fig.width = 16, fig.height = 12}
+
+#turn off scientific notation
+options(scipen = 999)
+
+#make molecule a factor variable
+data$molecule = factor(data$molecule)
+data$molecule = fct_reorder(data$molecule, data$spending, .fun = mean)
+levels(data$molecule)
+
+#actual spending
+a <- data %>% 
+    ggplot(aes(x=year, y=spending, fill = molecule)) +
+        geom_bar(position="stack", stat="identity") +
+        theme_minimal() +
+          theme(
+            plot.title = element_text(size = 16), 
+            plot.subtitle = element_text(size = 14), 
+            plot.caption = element_text(size = 14),     
+            axis.title = element_text(size = 14),    
+            axis.text = element_text(size = 14),        
+            legend.title = element_text(size = 14),      
+            legend.text = element_text(size = 14)       
+        ) + 
+        labs(title = "Actual Medicare Part D Spending, 2018-2022",
+                subtitle = "Spending on these drugs reached $46bn in 2022",
+                x = "Year",
+                y = "Medicare Part D Spending ($, millions)",
+                caption = "Spending is expressed in millions of USD.",
+                fill = "Molecule") +
+        ylim(0, 50000)
+
+#estimated spending with negotiated prices 
+b <- data %>% 
+    ggplot(aes(x=year, y=est_spending, fill = molecule)) +
+        geom_bar(position="stack", stat="identity") +
+        theme_minimal() +
+          theme(
+            plot.title = element_text(size = 16), 
+            plot.subtitle = element_text(size = 14), 
+            plot.caption = element_text(size = 14),     
+            axis.title = element_text(size = 14),    
+            axis.text = element_text(size = 14),        
+            legend.title = element_text(size = 14),      
+            legend.text = element_text(size = 14)       
+        ) + 
+        labs(title = "Hypothetical Medicare Part D Spending With Negotiated Prices, 2018-2022",
+                subtitle = "Negotiated prices would have reduced spending by nearly half",
+                x = "Year",
+                y = "Medicare Part D Spending ($, millions)",
+                caption = "Spending is expressed in millions of USD.",
+                fill = "Molecule") +
+        ylim(0, 50000)
+
+ggarrange(a, b, nrow=1, common.legend = TRUE, legend = "bottom")
+```
+
+### Reduction in Spending by Drug, 2018-2022
+``` {r, fig.width = 16, fig.height = 12}
+data %>%
+pivot_longer(cols = contains("spending"), names_to = "spending_type", values_to = "spend") %>%
+ggplot(aes(x=year, y=spend, color=spending_type, group=spending_type)) +
+    geom_point() + geom_line() +
+    facet_wrap(. ~ molecule, nrow = 2) +
+    theme_minimal() +
+              theme(
+            plot.title = element_text(size = 16), 
+            plot.subtitle = element_text(size = 14), 
+            plot.caption = element_text(size = 14),     
+            axis.title = element_text(size = 14),    
+            axis.text = element_text(size = 14),
+            strip.text = element_text(size = 14),
+            legend.title = element_text(size = 14),      
+            legend.text = element_text(size = 14),
+            axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)     
+        ) +
+    labs(title = "Actual Spending vs Hypothetical Spending Under Negotiated Prices, 2018-2022",
+            subtitle = "Negotiation would have not only decreased spending but also slowed growth over time",
+            x = "Year",
+            y = "Spending") +
+    scale_color_manual(name = "Type of Spending",
+                        values = c("spending" = "coral", "est_spending" = "cyan"),
+                        breaks = c("spending", "est_spending"),
+                        labels = c("Actual Spending", "Hypothetical Spending With Negotiated Prices"))
+```
