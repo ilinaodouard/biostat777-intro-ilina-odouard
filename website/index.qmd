@@ -1,9 +1,45 @@
 ---
-title: "website"
+title: "Ilina Odouard"
 author: 
   - name: Ilina Odouard
-description: "Project 1 website"
-date: 2024-11-08
+description: "PhD Student at the Johns Hopkins Bloomberg School of Public Health"
 ---
+```{r}
+#| echo: false
+knitr::include_graphics("Odouard_Ilina.jpeg")
+```
+
+Welcome to my website! I am a first-year PhD student in health services research at the Johns Hopkins Bloomberg School of Public Health. I also received my MPH from BSPH in 2022. I'm interested in improving value in the healthcare system, and my research focuses on this issue through the lens of prescription drugs. 
+
+I am originally from New York, but I am thrilled to be in Baltimore. I love spending time outside, so here are some of my favorite places to go for walks or jogs in these two great cities!
+
+
+Riverside Park, New York, NY
+```{r}
+#| echo: false
+knitr::include_graphics("riverside.jpg")
+```
+
+
+Central Park Reservoir, New York, NY
+```{r}
+#| echo: false
+knitr::include_graphics("cp.jpg")
+```
+
+
+Canton Waterfront, Baltimore, MD
+```{r}
+#| echo: false
+knitr::include_graphics("canton.jpg")
+```
+
+
+Patterson Park (in the fall!), Baltimore, MD
+```{r}
+#| echo: false
+knitr::include_graphics("patterson.jpg")
+```
+
 
 

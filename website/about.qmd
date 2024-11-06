@@ -4,13 +4,36 @@ title: "About"
 
 # Bio
 
-Ilina Odouard is a Ph.D. student concentrating in health services research and policy in the Department of Health Policy and Management at the Johns Hopkins Bloomberg School of Public Health. Her research investigates pharmaceutical regulatory and payment strategies to promote affordability and equitable access while managing spending and maintaining adequate evidence quality. Currently, her research focuses on Medicare and Medicaid payment strategies for cell and gene therapies and investment in pharmaceutical innovation. Her work has been published in JAMA, JAMA Neurology, the Journal of Managed Care and Specialty Pharmacy, Value in Health, Health Affairs Scholar, and O&G Open. Prior to becoming an academic researcher, she was a life sciences and healthcare strategy consultant in both the United States and Australia.
+I am a Ph.D. student concentrating in health services research and policy in the Department of Health Policy and Management at the Johns Hopkins Bloomberg School of Public Health. I came to academia because I was interested in understanding how to improve value in the healthcare system. My research broadly explores tradeoffs between the costs and benefits of prescriptions drugs and aims to identify regulatory and payment strategies to promote affordability and equitable access. Currently, my work focuses on Medicare and Medicaid payment strategies for cell and gene therapies and investment in pharmaceutical innovation. My work has been published in JAMA, JAMA Neurology, the Journal of Managed Care and Specialty Pharmacy, Value in Health, Health Affairs Scholar, and O&G Open. Prior to becoming an academic researcher, I was a life sciences and healthcare strategy consultant in both the United States and Australia.
 
 # Education
 
-### Johns Hopkins Bloomberg School of Public Health | Baltimore, USA
+**Johns Hopkins Bloomberg School of Public Health** | Baltimore, USA
 Ph.D. in Health Services Research | August 2024 - Present
 M.P.H. | June 2022 - May 2023
 
-### Barnard College of Columbia University | New York, USA
+**Barnard College of Columbia University** | New York, USA
 B.A. in Neuroscience & Behavior | September 2014 - May 2018
+
+
+# Experience
+
+**Johns Hopkins Drug Access and Affordability Initiative** \| Faculty Research Associate \| Remote \| May 2023 - August 2024
+
+**Blue Matter Consulting** \| Senior Consultant \| New York, USA \| September 2021 - May 2022
+
+**Health Technology Analysts** \| Senior Consultant \| Sydney, Australia \| March 2020 - May 2021
+
+**IQVIA Consulting Services** \| Associate \| New York, USA \| August 2018 - October 2019
+
+
+# Skills
+
+Claims data analysis, programming in R and Stata, literature review
+
+
+# Contact
+
+[Google Scholar](https://scholar.google.com/citations?user=ow08vHwAAAAJ&hl=en)
+[LinkedIn](https://www.linkedin.com/in/ilina-odouard/)
+[GitHub](https://github.com/ilinaodouard)

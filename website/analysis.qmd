@@ -3,22 +3,47 @@ title: "Example Data Analysis: Medicare Part D Drug Price Negotiation"
 format: html
 ---
 
-An example data analysis can be found below. 
+An example data analysis can be found below.
 
 # Background
 
-Under the Inflation Reduction Act of 2022, Medicare is allowed to negotiate the prices of certain drugs with high spending. In the first year of the negotiation program, Medicare was permitted to negotiate the prices of 10 Part D drugs. 
+Under the Inflation Reduction Act of 2022, Medicare is allowed to negotiate the prices of certain drugs with high spending. In the first year of the negotiation program, Medicare was permitted to negotiate the prices of 10 Part D drugs with high budget impact.
 
 # Objective
 
-This analysis will estimated what the annual spending on these ten drugs would have been between 2018-2022 if the new negotiated prices had been implemented during those years. The analysis uses Medicare Part D Dashboard data (https://data.cms.gov/summary-statistics-on-use-and-payments/medicare-medicaid-spending-by-drug/medicare-part-d-spending-by-drug) and the negotiated prices for  the first ten Part D drugs selected for negotiation (https://www.cms.gov/inflation-reduction-act-and-medicare/medicare-drug-price-negotiation). 
+This analysis estimates what the annual spending on these ten drugs would have been between 2018-2022 if the new negotiated prices had been implemented during those years. The intended audience for this analysis is health policy researchers, policymakers, and members of the public who are interested in understanding the magnitude of the effect of negotiated prices on Medicare Part D drug spending for negotiated drugs.
+
+# Data
+
+The analysis uses Medicare Part D Dashboard data (@dashboard2024) and the negotiated prices for the first ten Part D drugs selected for negotiation. (@negotiation2024) Data dictionaries for the Medicare Part D dashabord data can be found here (https://data.cms.gov/resources/medicare-part-d-spending-by-drug-data-dictionary) and for the drug price dataset can be downloaded from here (https://www.cms.gov/inflation-reduction-act-and-medicare/medicare-drug-price-negotiation).
+
+# What are the ten drugs selected for the first round of drug price negotiation?
+
+```{r}
+#display image of table from Kaiser Family Foundation with information about the ten drugs
+knitr::include_graphics("medicaredrugsinfo.jpeg")
+```
+
+Image accessed from: https://www.kff.org/affordable-care-act/press-release/3-charts-about-medicare-drug-price-negotiations/
+
+::: {.callout-note appearance="simple"}
+## Will it really make much of a difference on total Part D spending to negotiate the prices of only ten drugs?
+
+Actually, yes! These ten drugs accounted for approximately 20% of total Part D spending in 2023. (@aspe2024)
+:::
+
+# Data Analysis
 
 ## Load the data
+
 ```{r}
 #load packages
 library(tidyverse)
 library(languageserver)
 library(ggpubr)
+
+#set working directory 
+setwd("/Users/ilinaodouard/Library/CloudStorage/OneDrive-JohnsHopkins/08 PhD/06 Second Term 2024-25/02 Statistical Programming Paradigms and Workflows/03_Projects/biostat777-intro-ilina-odouard/website")
 
 #read in data files
 drugprices <- read_csv("negotiatedprices.csv")
@@ -26,6 +51,7 @@ spending <- read_csv("medicarepartd.csv")
 ```
 
 ## Wrangling: Drug Prices
+
 ```{r}
 #select and rename variables
 drugprices <- drugprices %>%
@@ -48,6 +74,7 @@ head(drugprices)
 ```
 
 ## Wrangling: Spending
+
 ```{r}
 #rename variables, arrange in tidy format
 spending <- spending %>%
@@ -78,14 +105,22 @@ head(spending)
 
 ```
 
-
 ## Finalize Analytic Dataset
-``` {r}
+
+```{r}
 #join with drug price data 
 data <- left_join(drugprices, spending, by = "molecule")
 
 head(data)
+```
 
+::: {.callout-note appearance="simple"}
+## Note on joining datasets
+
+I used left_join to join the drug price and spending datasets. This way, only the information on the ten relevant drugs from the spending dataset are retained.
+:::
+
+```{r}
 #make 1 row per drug-year
 data <- data %>%
     filter(Mftr_Name=="Overall") %>%
@@ -113,10 +148,11 @@ group_by(year) %>%
 summarize(tot_spend = sum(spending))
 ```
 
-## Plots
+# Plots
 
-### Actual and Hypothetical Spending on First Ten Part D Drugs Included in Negotiation Program, 2018-2022
-``` {r, fig.width = 16, fig.height = 12}
+## Figure 1: Actual and Hypothetical Spending on First Ten Part D Drugs Included in Negotiation Program, 2018-2022
+
+```{r, fig.width = 16, fig.height = 12}
 
 #turn off scientific notation
 options(scipen = 999)
@@ -173,8 +209,9 @@ b <- data %>%
 ggarrange(a, b, nrow=1, common.legend = TRUE, legend = "bottom")
 ```
 
-### Reduction in Spending by Drug, 2018-2022
-``` {r, fig.width = 16, fig.height = 12}
+## Figure 2: Reduction in Spending by Drug, 2018-2022
+
+```{r, fig.width = 16, fig.height = 12}
 data %>%
 pivot_longer(cols = contains("spending"), names_to = "spending_type", values_to = "spend") %>%
 ggplot(aes(x=year, y=spend, color=spending_type, group=spending_type)) +
@@ -195,9 +232,51 @@ ggplot(aes(x=year, y=spend, color=spending_type, group=spending_type)) +
     labs(title = "Actual Spending vs Hypothetical Spending Under Negotiated Prices, 2018-2022",
             subtitle = "Negotiation would have not only decreased spending but also slowed growth over time",
             x = "Year",
-            y = "Spending") +
+            y = "Spending",
+            caption = "Spending is expressed in millions of USD.") +
     scale_color_manual(name = "Type of Spending",
                         values = c("spending" = "coral", "est_spending" = "cyan"),
                         breaks = c("spending", "est_spending"),
                         labels = c("Actual Spending", "Hypothetical Spending With Negotiated Prices"))
 ```
+
+## Figure 3: Percent Reduction in Spending If Negotiated Prices Had Been Implemented in 2022
+``` {r, fig.width = 16, fig.height = 12}
+#| label: fig-cap-margin
+#| fig-cap: "Percentages represent the change in spending had the negotiated prices been implemented in 2022, compared to actual spending."
+#| cap-location: margin
+
+data %>%
+    filter(year=="2022") %>%
+    ggplot(aes(x = fct_reorder(molecule, perc_diff, .desc=TRUE), y = perc_diff)) +
+    geom_bar(position="dodge", stat="identity", fill = "coral") +
+    coord_flip() +
+        theme_minimal() +
+        theme(
+            plot.title = element_text(size = 16), 
+            plot.subtitle = element_text(size = 14), 
+            plot.caption = element_text(size = 14),     
+            axis.title = element_text(size = 14),    
+            axis.text = element_text(size = 14),
+        ) +
+    labs(title = "Hypothetical Percent Change in Spending in 2022 With Negotiated Prices",
+            subtitle = "The change in spending would have varied by drug from -13% to -70%",
+            x = "Drug",
+            y = "Percent Difference in Spending") 
+```
+
+
+# Summary
+
+This analysis demonstrated how negotiated drug prices would have impacted Medicare Part D spending on the ten drugs selected for the first round of negotiation. While spending would have continued to grow year-over-year due to increasing utilization, the negotiated prices would have reduced total spending on these drugs by nearly 50%. Apixaban, a drug treating blood clots, is the most influential in the total spending as it reached over $15 billion in spending in 2022. This would have been cut down to $9.7 billion if the negotiated prices had been implemented at the time. Comparing actual spending to hypothetical spending under the negotiated prices during these years, we can see some variation by drug. In 2022, the difference in spending would have ranged from -13% to -70% depending on the drug. The limitation of this analysis is that utilization in 2018-2022 may not be representative of utilization of these drugs in 2026 and beyond (when the prices are implemented). 
+
+
+# Functions Used
+
+dplyr: select(), filter(), group_by(), mutate(), summarize(), reframe()
+
+tidyr: pivot_longer(), pivot_wider()
+
+ggplot2: ggplot(), geom_bar(), geom_line(), geom_point()
+
+facet_wrap()

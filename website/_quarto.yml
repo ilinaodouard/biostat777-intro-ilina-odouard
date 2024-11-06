@@ -20,6 +20,8 @@ format:
     css: styles.css
     toc: true
     width: 800px
+    bibliography: references.bib
+    csl: american-medical-association.csl
 
 
 
